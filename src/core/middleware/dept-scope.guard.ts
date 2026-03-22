@@ -18,23 +18,27 @@ export async function deptScopeGuard(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  if (req.user.role === ROLES.ORG_MANAGER) {
-    // Fetch all departments assigned to this manager
-    const result = await query(
-      'SELECT department_id FROM user_departments WHERE user_id = $1',
-      [req.user.id],
-    );
+  try {
+    if (req.user.role === ROLES.ORG_MANAGER) {
+      // Fetch all departments assigned to this manager
+      const result = await query(
+        'SELECT department_id FROM user_departments WHERE user_id = $1',
+        [req.user.id],
+      );
 
-    const deptIds = result.rows.map((r: any) => r.department_id);
+      const deptIds = result.rows.map((r: any) => r.department_id);
 
-    if (deptIds.length > 0) {
-      req.scopedDepartmentIds = deptIds;
-      req.scopedDepartmentId = deptIds[0]; // backward compatibility
-    } else if (req.user.departmentId) {
-      // Fallback to JWT departmentId if junction table is empty
-      req.scopedDepartmentIds = [req.user.departmentId];
-      req.scopedDepartmentId = req.user.departmentId;
+      if (deptIds.length > 0) {
+        req.scopedDepartmentIds = deptIds;
+        req.scopedDepartmentId = deptIds[0]; // backward compatibility
+      } else if (req.user.departmentId) {
+        // Fallback to JWT departmentId if junction table is empty
+        req.scopedDepartmentIds = [req.user.departmentId];
+        req.scopedDepartmentId = req.user.departmentId;
+      }
     }
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 }

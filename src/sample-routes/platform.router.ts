@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../core/middleware/auth.middleware';
 import { requireRole } from '../core/middleware/role.guard';
+import { validateUuidParams } from '../core/middleware/validate-uuid';
 import { ROLES } from '../core/rbac/roles.constants';
 import { query } from '../db/db.client';
 
@@ -45,6 +46,7 @@ router.get(
 // Get a single organization's details
 router.get(
   '/org/:orgId',
+  validateUuidParams('orgId'),
   authMiddleware,
   requireRole([ROLES.SUPERADMIN, ROLES.SUPERADMIN_TEAM]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -129,6 +131,7 @@ router.post(
 // Update an organization's details (superadmin ONLY)
 router.put(
   '/org/:orgId',
+  validateUuidParams('orgId'),
   authMiddleware,
   requireRole([ROLES.SUPERADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -213,6 +216,7 @@ router.put(
 // Activate an organization (superadmin ONLY)
 router.patch(
   '/org/:orgId/activate',
+  validateUuidParams('orgId'),
   authMiddleware,
   requireRole([ROLES.SUPERADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -250,6 +254,7 @@ router.patch(
 // Deactivated orgs' users will be blocked by auth middleware on next request
 router.patch(
   '/org/:orgId/deactivate',
+  validateUuidParams('orgId'),
   authMiddleware,
   requireRole([ROLES.SUPERADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -287,6 +292,7 @@ router.patch(
 // This will cascade delete all departments and set user org_id to null
 router.delete(
   '/org/:orgId',
+  validateUuidParams('orgId'),
   authMiddleware,
   requireRole([ROLES.SUPERADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {

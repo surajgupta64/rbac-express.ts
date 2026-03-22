@@ -4,6 +4,7 @@ import { tenantGuard } from '../core/middleware/tenant.guard';
 import { requireRole } from '../core/middleware/role.guard';
 import { requirePermission } from '../core/middleware/permission.guard';
 import { deptScopeGuard } from '../core/middleware/dept-scope.guard';
+import { validateUuidParams } from '../core/middleware/validate-uuid';
 import { ROLES } from '../core/rbac/roles.constants';
 import { MODULES, ACTIONS } from '../core/constants/modules.constants';
 import { query } from '../db/db.client';
@@ -18,6 +19,7 @@ const baseChain = [authMiddleware, tenantGuard];
 // org_employee: own records only
 router.get(
   '/orgs/:orgId/attendance',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER, ROLES.ORG_EMPLOYEE]),
   requirePermission(MODULES.ATTENDANCE, ACTIONS.READ),
@@ -88,6 +90,7 @@ router.get(
 // If no employeeId, clocks in the logged-in user
 router.post(
   '/orgs/:orgId/attendance/clock-in',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER, ROLES.ORG_EMPLOYEE]),
   requirePermission(MODULES.ATTENDANCE, ACTIONS.WRITE),
@@ -182,6 +185,7 @@ router.post(
 // If no employeeId, clocks out the logged-in user
 router.post(
   '/orgs/:orgId/attendance/clock-out',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER, ROLES.ORG_EMPLOYEE]),
   requirePermission(MODULES.ATTENDANCE, ACTIONS.WRITE),

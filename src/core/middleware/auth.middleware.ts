@@ -44,23 +44,22 @@ export async function authMiddleware(
 
   const token = authHeader.split(' ')[1];
 
-  // Check blacklist in Postgres
-  const blacklisted = await query(
-    'SELECT 1 FROM token_blacklist WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1',
-    [hashToken(token)],
-  );
-  if (blacklisted.rows.length > 0) {
-    res.status(401).json({
-      statusCode: 401,
-      error: ERROR_CODES.REVOKED_TOKEN,
-      message: 'Token has been revoked',
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
-    });
-    return;
-  }
-
   try {
+    // Check blacklist in Postgres
+    const blacklisted = await query(
+      'SELECT 1 FROM token_blacklist WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1',
+      [hashToken(token)],
+    );
+    if (blacklisted.rows.length > 0) {
+      res.status(401).json({
+        statusCode: 401,
+        error: ERROR_CODES.REVOKED_TOKEN,
+        message: 'Token has been revoked',
+        timestamp: new Date().toISOString(),
+        path: req.originalUrl,
+      });
+      return;
+    }
     const payload = jwt.verify(token, PUBLIC_KEY, {
       algorithms: ['RS256'],
       issuer: process.env.JWT_ISSUER || 'davandee-auth-service',
@@ -90,13 +89,18 @@ export async function authMiddleware(
       });
       return;
     }
-    res.status(401).json({
-      statusCode: 401,
-      error: ERROR_CODES.INVALID_TOKEN,
-      message: 'Token is invalid',
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
-    });
+    if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+      res.status(401).json({
+        statusCode: 401,
+        error: ERROR_CODES.INVALID_TOKEN,
+        message: 'Token is invalid',
+        timestamp: new Date().toISOString(),
+        path: req.originalUrl,
+      });
+      return;
+    }
+    // Forward unexpected errors (DB errors, etc.) to the global error handler
+    next(err);
   }
 }
 

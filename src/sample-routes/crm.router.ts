@@ -3,6 +3,7 @@ import { authMiddleware } from '../core/middleware/auth.middleware';
 import { tenantGuard } from '../core/middleware/tenant.guard';
 import { requireRole } from '../core/middleware/role.guard';
 import { requirePermission } from '../core/middleware/permission.guard';
+import { validateUuidParams } from '../core/middleware/validate-uuid';
 import { ROLES } from '../core/rbac/roles.constants';
 import { MODULES, ACTIONS } from '../core/constants/modules.constants';
 import { query } from '../db/db.client';
@@ -13,6 +14,7 @@ const baseChain = [authMiddleware, tenantGuard];
 // ─── GET /orgs/:orgId/crm/leads ──────────────────────────────────
 router.get(
   '/orgs/:orgId/crm/leads',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER]),
   requirePermission(MODULES.CRM, ACTIONS.READ),
@@ -55,6 +57,7 @@ router.get(
 // ─── GET /orgs/:orgId/crm/leads/:leadId ─────────────────────────
 router.get(
   '/orgs/:orgId/crm/leads/:leadId',
+  validateUuidParams('orgId', 'leadId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER]),
   requirePermission(MODULES.CRM, ACTIONS.READ),
@@ -86,6 +89,7 @@ router.get(
 // ─── POST /orgs/:orgId/crm/leads ────────────────────────────────
 router.post(
   '/orgs/:orgId/crm/leads',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.CRM, ACTIONS.WRITE),
@@ -120,6 +124,7 @@ router.post(
 // ─── PUT /orgs/:orgId/crm/leads/:leadId ─────────────────────────
 router.put(
   '/orgs/:orgId/crm/leads/:leadId',
+  validateUuidParams('orgId', 'leadId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.CRM, ACTIONS.WRITE),
@@ -169,6 +174,7 @@ router.put(
 // ─── DELETE /orgs/:orgId/crm/leads/:id ───────────────────────────
 router.delete(
   '/orgs/:orgId/crm/leads/:id',
+  validateUuidParams('orgId', 'id'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN]),
   requirePermission(MODULES.CRM, ACTIONS.DELETE),

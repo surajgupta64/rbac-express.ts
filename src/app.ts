@@ -53,6 +53,15 @@ app.use('/', platformRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// ─── Process-Level Crash Guards ─────────────────────────────────
+process.on('uncaughtException', (err: Error) => {
+  console.error('UNCAUGHT EXCEPTION — keeping server alive:', err);
+});
+
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error('UNHANDLED REJECTION — keeping server alive:', reason);
+});
+
 // ─── Server Startup ──────────────────────────────────────────────
 async function startServer() {
   try {

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../core/middleware/auth.middleware';
 import { tenantGuard } from '../core/middleware/tenant.guard';
 import { requireRole } from '../core/middleware/role.guard';
+import { validateUuidParams } from '../core/middleware/validate-uuid';
 import { ROLES } from '../core/rbac/roles.constants';
 import { query } from '../db/db.client';
 
@@ -24,6 +25,7 @@ const baseChain = [authMiddleware, tenantGuard];
 // List all departments in the organization
 router.get(
   '/orgs/:orgId/departments',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -60,6 +62,7 @@ router.get(
 // Get a single department with its employees
 router.get(
   '/orgs/:orgId/departments/:deptId',
+  validateUuidParams('orgId', 'deptId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -105,6 +108,7 @@ router.get(
 // Create a new department
 router.post(
   '/orgs/:orgId/departments',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -160,6 +164,7 @@ router.post(
 // Update department name
 router.put(
   '/orgs/:orgId/departments/:deptId',
+  validateUuidParams('orgId', 'deptId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -226,6 +231,7 @@ router.put(
 // Delete a department — ONLY if no employees are mapped to it
 router.delete(
   '/orgs/:orgId/departments/:deptId',
+  validateUuidParams('orgId', 'deptId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -297,6 +303,7 @@ router.delete(
 // Reassign an employee to a different department
 router.patch(
   '/orgs/:orgId/employees/:empId/department',
+  validateUuidParams('orgId', 'empId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   async (req: Request, res: Response, next: NextFunction) => {

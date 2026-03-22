@@ -3,6 +3,7 @@ import { authMiddleware } from '../core/middleware/auth.middleware';
 import { tenantGuard } from '../core/middleware/tenant.guard';
 import { requireRole } from '../core/middleware/role.guard';
 import { requirePermission } from '../core/middleware/permission.guard';
+import { validateUuidParams } from '../core/middleware/validate-uuid';
 import { ROLES } from '../core/rbac/roles.constants';
 import { MODULES, ACTIONS } from '../core/constants/modules.constants';
 import { query } from '../db/db.client';
@@ -13,6 +14,7 @@ const baseChain = [authMiddleware, tenantGuard];
 // ─── GET /orgs/:orgId/sales/orders ───────────────────────────────
 router.get(
   '/orgs/:orgId/sales/orders',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER]),
   requirePermission(MODULES.SALES, ACTIONS.READ),
@@ -53,6 +55,7 @@ router.get(
 // ─── GET /orgs/:orgId/sales/orders/:orderId ──────────────────────
 router.get(
   '/orgs/:orgId/sales/orders/:orderId',
+  validateUuidParams('orgId', 'orderId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER]),
   requirePermission(MODULES.SALES, ACTIONS.READ),
@@ -82,6 +85,7 @@ router.get(
 // ─── POST /orgs/:orgId/sales/orders ──────────────────────────────
 router.post(
   '/orgs/:orgId/sales/orders',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.SALES, ACTIONS.WRITE),
@@ -116,6 +120,7 @@ router.post(
 // ─── PUT /orgs/:orgId/sales/orders/:orderId ──────────────────────
 router.put(
   '/orgs/:orgId/sales/orders/:orderId',
+  validateUuidParams('orgId', 'orderId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.SALES, ACTIONS.WRITE),
@@ -162,6 +167,7 @@ router.put(
 // ─── DELETE /orgs/:orgId/sales/orders/:id ────────────────────────
 router.delete(
   '/orgs/:orgId/sales/orders/:id',
+  validateUuidParams('orgId', 'id'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN]),
   requirePermission(MODULES.SALES, ACTIONS.DELETE),
@@ -189,6 +195,7 @@ router.delete(
 // ─── GET /orgs/:orgId/sales/targets ──────────────────────────────
 router.get(
   '/orgs/:orgId/sales/targets',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER]),
   requirePermission(MODULES.SALES, ACTIONS.READ),
@@ -215,6 +222,7 @@ router.get(
 // ─── POST /orgs/:orgId/sales/targets ─────────────────────────────
 router.post(
   '/orgs/:orgId/sales/targets',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.SALES, ACTIONS.WRITE),

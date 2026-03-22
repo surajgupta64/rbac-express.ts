@@ -4,6 +4,7 @@ import { tenantGuard } from '../core/middleware/tenant.guard';
 import { requireRole } from '../core/middleware/role.guard';
 import { requirePermission } from '../core/middleware/permission.guard';
 import { deptScopeGuard } from '../core/middleware/dept-scope.guard';
+import { validateUuidParams } from '../core/middleware/validate-uuid';
 import { ROLES } from '../core/rbac/roles.constants';
 import { MODULES, ACTIONS } from '../core/constants/modules.constants';
 import { query } from '../db/db.client';
@@ -78,11 +79,13 @@ router.get(
 // org_employee sees only self, superadmin sees all
 router.get(
   '/orgs/:orgId/employees',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN, ROLES.ORG_MANAGER, ROLES.ORG_EMPLOYEE]),
   requirePermission(MODULES.HRMS, ACTIONS.READ),
   deptScopeGuard,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
     const orgId = req.resolvedOrgId || req.params.orgId;
 
     let sql = `SELECT u.id, u.name, u.email, u.role, u.created_at
@@ -145,6 +148,9 @@ router.get(
         scopedDepartmentIds: req.scopedDepartmentIds || null,
       },
     });
+    } catch (err) {
+      next(err);
+    }
   },
 );
 
@@ -154,6 +160,7 @@ router.get(
 // org_employee: accepts departmentId (single department)
 router.post(
   '/orgs/:orgId/employees',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.HRMS, ACTIONS.WRITE),
@@ -293,32 +300,37 @@ router.post(
 // Only org_admin and superadmin can delete (soft-delete)
 router.delete(
   '/orgs/:orgId/employees/:id',
+  validateUuidParams('orgId', 'id'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.HRMS, ACTIONS.DELETE),
-  async (req: Request, res: Response) => {
-    const orgId = req.resolvedOrgId || req.params.orgId;
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const orgId = req.resolvedOrgId || req.params.orgId;
 
-    const result = await query(
-      'UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1 AND org_id = $2 RETURNING id',
-      [req.params.id, orgId],
-    );
+      const result = await query(
+        'UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1 AND org_id = $2 RETURNING id',
+        [req.params.id, orgId],
+      );
 
-    if (result.rows.length === 0) {
-      res.status(404).json({
-        statusCode: 404,
-        error: 'NOT_FOUND',
-        message: 'Employee not found in this organization',
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl,
+      if (result.rows.length === 0) {
+        res.status(404).json({
+          statusCode: 404,
+          error: 'NOT_FOUND',
+          message: 'Employee not found in this organization',
+          timestamp: new Date().toISOString(),
+          path: req.originalUrl,
+        });
+        return;
+      }
+
+      res.status(200).json({
+        statusCode: 200,
+        message: 'Employee deactivated successfully',
       });
-      return;
+    } catch (err) {
+      next(err);
     }
-
-    res.status(200).json({
-      statusCode: 200,
-      message: 'Employee deactivated successfully',
-    });
   },
 );
 
@@ -326,6 +338,7 @@ router.delete(
 // Update employee details (name, email, role, departments)
 router.put(
   '/orgs/:orgId/employees/:id',
+  validateUuidParams('orgId', 'id'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.HRMS, ACTIONS.WRITE),
@@ -476,6 +489,7 @@ router.put(
 // Activate an employee
 router.patch(
   '/orgs/:orgId/employees/:id/activate',
+  validateUuidParams('orgId', 'id'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.HRMS, ACTIONS.WRITE),
@@ -516,6 +530,7 @@ router.patch(
 // Deactivate an employee
 router.patch(
   '/orgs/:orgId/employees/:id/deactivate',
+  validateUuidParams('orgId', 'id'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.HRMS, ACTIONS.WRITE),
@@ -556,18 +571,23 @@ router.patch(
 // Only org_admin and superadmin (manage permission)
 router.get(
   '/orgs/:orgId/payroll',
+  validateUuidParams('orgId'),
   ...baseChain,
   requireRole([ROLES.SUPERADMIN, ROLES.ORG_ADMIN]),
   requirePermission(MODULES.HRMS, ACTIONS.MANAGE),
-  async (req: Request, res: Response) => {
-    const orgId = req.resolvedOrgId || req.params.orgId;
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const orgId = req.resolvedOrgId || req.params.orgId;
 
-    res.json({
-      statusCode: 200,
-      data: [],
-      message: 'Payroll data — placeholder for payroll service integration',
-      meta: { orgId, requestedBy: req.user.email },
-    });
+      res.json({
+        statusCode: 200,
+        data: [],
+        message: 'Payroll data — placeholder for payroll service integration',
+        meta: { orgId, requestedBy: req.user.email },
+      });
+    } catch (err) {
+      next(err);
+    }
   },
 );
 
